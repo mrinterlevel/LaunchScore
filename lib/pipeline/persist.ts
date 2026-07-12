@@ -2,6 +2,16 @@ import { getSupabase } from "@/lib/supabase";
 import { putMemAudit } from "@/lib/auditStore";
 import type { FindingRow, Report } from "@/lib/types";
 
+function persistenceMessage(action: string, message: string | undefined): string {
+  if (message && /invalid api key/i.test(message)) {
+    return (
+      `Supabase rejected its server API key while ${action}. ` +
+      "Set SUPABASE_SECRET_KEY to the project's sb_secret_ key (preferred), or use its legacy service_role key."
+    );
+  }
+  return `Could not ${action}: ${message ?? "unknown database error"}`;
+}
+
 function findingRows(report: Report, auditId: string): FindingRow[] {
   const rows: FindingRow[] = [];
   const add = (
@@ -47,7 +57,7 @@ export async function persistAudit(report: Report): Promise<string | null> {
     .single();
 
   if (auditError || !audit) {
-    throw new Error(`Could not persist audit: ${auditError?.message ?? "no audit id returned"}`);
+    throw new Error(persistenceMessage("persist the audit", auditError?.message ?? "no audit id returned"));
   }
 
   const rows = findingRows(report, audit.id);
@@ -56,7 +66,7 @@ export async function persistAudit(report: Report): Promise<string | null> {
   const { error: findingsError } = await supabase.from("findings").insert(rows);
   if (findingsError) {
     await supabase.from("audits").delete().eq("id", audit.id);
-    throw new Error(`Could not persist findings: ${findingsError.message}`);
+    throw new Error(persistenceMessage("persist the findings", findingsError.message));
   }
 
   return audit.id;
