@@ -9,6 +9,7 @@
 // over the same aggregate — same field, richer prose. This stays as fallback.
 
 import type { Category } from "./types";
+import { scoreGrade } from "./grading";
 import { CATEGORY_LABEL } from "./ui";
 
 interface AggregateForInsights {
@@ -61,7 +62,7 @@ export function composeInsights(a: AggregateForInsights): string | null {
   const weakest = weakestCategory(a.avg_category_scores);
   if (weakest && topProblem) {
     sentences.push(
-      `The weakest category on average is ${CATEGORY_LABEL[weakest.cat]} (${weakest.score}/100); templating richer ${categoryFix(topProblem.category)} would lift the average LaunchScore above its current ${a.avg_score}.`
+      `The weakest category on average is ${CATEGORY_LABEL[weakest.cat]} (grade ${scoreGrade(weakest.score)}); templating richer ${categoryFix(topProblem.category)} would lift the average launch grade above its current ${scoreGrade(a.avg_score)}.`
     );
   }
 

@@ -4,6 +4,7 @@ import { supabaseConfigured } from "@/lib/supabase";
 import PatternBars from "@/components/PatternBars";
 import CategoryBars from "@/components/CategoryBars";
 import { scoreGrade } from "@/lib/grading";
+import { getAggregateInsight } from "@/lib/pipeline/insights";
 import { scoreColor } from "@/lib/ui";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,9 @@ export default async function PatternsPage() {
       </div>
     );
   }
+
+  const generatedInsight = await getAggregateInsight();
+  const insights = generatedInsight.insights ?? p.insights;
 
   return (
     <div className="flex flex-col gap-8">
@@ -100,7 +104,7 @@ export default async function PatternsPage() {
       </div>
 
       {/* insights for Daybot */}
-      {p.insights && (
+      {insights && (
         <section
           className="rounded-2xl border p-6"
           style={{
@@ -112,7 +116,7 @@ export default async function PatternsPage() {
             <span className="text-lg">💡</span>
             <h2 className="text-sm font-semibold uppercase tracking-wide">Insights for Daybot</h2>
           </div>
-          <p className="text-sm leading-relaxed">{p.insights}</p>
+          <p className="text-sm leading-relaxed">{insights}</p>
         </section>
       )}
 
