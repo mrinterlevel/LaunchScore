@@ -7,8 +7,8 @@ pipeline plugs in. Nothing here should require you to touch UI files.
 
 - **Knowledge base** — `scripts/build_kb.mjs`, `data/guidelines.mjs` (20 cards),
   `lib/embedding.mjs`, `lib/kb.ts`. `public/kb.json` is built (120 listings + 20
-  guides). Run `npm run build:kb` to rebuild (set `VOYAGE_API_KEY`/`OPENAI_API_KEY`
-  for real embeddings; otherwise a deterministic local fallback is used).
+  guides). Run `npm run build:kb` to rebuild with `GEMINI_API_KEY` for real embeddings;
+  otherwise a deterministic local fallback is used.
 - **UI** — home (`app/page.tsx`), report (`app/report/[id]/page.tsx`), patterns
   (`app/patterns/page.tsx`), and all `components/*`.
 - **Read-side data** — `lib/data.ts` (`getAudit`, `getPatterns`) reads Supabase and

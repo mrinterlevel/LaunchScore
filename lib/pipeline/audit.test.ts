@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { runAudit } from "./audit";
 import type { FetchImplementation } from "./crawler";
+import type { ProductRetrieval } from "./types";
 
 function page(html: string): Response {
   return new Response(html, { headers: { "content-type": "text/html" } });
@@ -35,6 +36,33 @@ const fixtureFetch: FetchImplementation = async (input) => {
   return new Response("missing", { status: 404, headers: { "content-type": "text/html" } });
 };
 
+const fixtureRetrieve = async (): Promise<ProductRetrieval[]> => [
+  {
+    productIndex: 0,
+    vector: [1, 0],
+    niche: "kitchen",
+    comps: [0, 1, 2, 3].map((index) => ({
+      id: `COMP-${index}`,
+      title: `Comparable ${index + 1}`,
+      niche: "kitchen",
+      price: 29.99,
+      images: 4,
+      descWords: 120,
+      sim: 0.8 - index * 0.05,
+    })),
+    guides: [{ id: "GUIDE-0", topic: "description", text: "Use benefit-led copy.", sim: 0.7 }],
+    metrics: {
+      descWords: 24,
+      compDescMedian: 120,
+      images: 3,
+      compImageMedian: 4,
+      price: 29.99,
+      compPriceMedian: 29.99,
+      pricePercentile: 50,
+    },
+  },
+];
+
 describe("runAudit", () => {
   it("produces a real contract-valid report without Supabase or Gemini configured", async () => {
     const result = await runAudit(home, {
@@ -42,6 +70,7 @@ describe("runAudit", () => {
       validateTarget: async () => undefined,
       persist: async () => null,
       synthesize: async (report) => report,
+      retrieve: fixtureRetrieve,
     });
 
     expect(result).toMatchObject({ id: "demo", persisted: false });

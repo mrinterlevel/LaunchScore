@@ -22,8 +22,9 @@ npm run dev                    # http://localhost:3000
 ```
 
 With **no** environment variables the app is fully runnable: it uses a deterministic
-local embedding and serves fixture data for `/report` and `/patterns`. Add a Voyage or
-OpenAI key for real retrieval, and Supabase keys to persist and aggregate real audits.
+local embedding and serves fixture data for `/report` and `/patterns`. Add a Gemini key,
+rebuild the KB, and add Supabase keys to enable real retrieval, synthesis, persistence,
+and aggregation.
 
 ## Pages
 
