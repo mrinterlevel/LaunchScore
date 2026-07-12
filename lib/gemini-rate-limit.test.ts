@@ -21,4 +21,22 @@ describe("Gemini request limiter", () => {
 
     expect(requestTimes).toEqual([0, 0, 60_000]);
   });
+
+  it("charges every item in an embedding batch against the cap", async () => {
+    let clock = 0;
+    const requestTimes: number[] = [];
+    const limit = createGeminiRateLimiter({
+      limit: 20,
+      windowMs: 60_000,
+      now: () => clock,
+      sleep: async (ms: number) => {
+        clock += ms;
+      },
+    });
+
+    await limit(async () => requestTimes.push(clock), { cost: 20 });
+    await limit(async () => requestTimes.push(clock), { cost: 20 });
+
+    expect(requestTimes).toEqual([0, 60_000]);
+  });
 });

@@ -139,8 +139,9 @@ async function main() {
     it.corpus === "guides" ? it.text : `${it.title}. ${it.desc}`
   );
 
-  // Batch to keep provider requests reasonable.
-  const BATCH = 64;
+  // Keep each embedding batch at the 20-RPM free-tier ceiling. The shared
+  // Gemini limiter charges one unit per input and waits before the next batch.
+  const BATCH = 20;
   const vectors = [];
   for (let i = 0; i < texts.length; i += BATCH) {
     const chunk = texts.slice(i, i + BATCH);
