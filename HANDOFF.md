@@ -33,10 +33,13 @@ pipeline plugs in. Nothing here should require you to touch UI files.
 
 ## Where you plug in
 
-1. **`app/api/audit/route.ts`** is a STUB (returns `{ id: "demo" }`). Replace its body
-   with the real pipeline and return the persisted audit's `{ id }`. The home page
-   already POSTs `{ url }` and redirects to `/report/{id}`.
-2. **Persist** into the `audits` + `findings` tables (`supabase/schema.sql`). One
+1. **`app/api/audit/route.ts`** is now Person A's route. It validates and normalizes
+   the submitted URL, then returns `{ id, report }` with `report` typed from the shared
+   `Report` contract. The report is contract-accurate mock data until the Hour 2+
+   pipeline replaces `createMockReport`; the home page uses `id` to redirect to
+   `/report/{id}`.
+2. **Persist** into the `audits` + `findings` tables
+   (`supabase/migrations/20260712000000_create_audits_and_findings.sql`). One
    `findings` row per finding with its `code`/`type`/`severity`/`product_title` — that's
    what powers `/patterns`. Once real audits land, `getPatterns()` aggregates them
    automatically and the "sample data" banner disappears.

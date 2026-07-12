@@ -137,3 +137,22 @@ export interface FindingRow {
   product_title: string | null;
   created_at?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Audit API
+// ---------------------------------------------------------------------------
+export interface AuditRequest {
+  url: string;
+}
+
+export interface AuditResponse {
+  id: string;
+  report: Report;
+}
+
+export interface ApiError {
+  error: {
+    code: string;
+    message: string;
+  };
+}
