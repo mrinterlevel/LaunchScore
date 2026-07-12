@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
 import { ISSUES } from "@/lib/taxonomy";
@@ -8,7 +8,7 @@ import { CATEGORIES, type CategoryScores, type Severity } from "@/lib/types";
 import { getSupabase } from "@/lib/supabase";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1_000;
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
+const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite";
 
 export interface AggregateInsight {
   insights: string | null;
@@ -109,7 +109,7 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
 
   const aggregate = parseAggregate(audits ?? [], findings ?? []);
   if (!aggregate.auditCount) return { insights: null, generatedAt: null, source: "empty" };
-  if (!process.env.ANTHROPIC_API_KEY) return { insights: null, generatedAt: null, source: "unavailable" };
+  if (!process.env.GEMINI_API_KEY) return { insights: null, generatedAt: null, source: "unavailable" };
 
   const key = fingerprint(aggregate);
   const cached = insightCache.get(key);
@@ -117,35 +117,33 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
     return { insights: cached.insights, generatedAt: cached.generatedAt, source: "cache" };
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const issueRows = (rows: AggregateRow[]) =>
     rows.slice(0, 8).map((row) => ({
       ...row,
       label: ISSUES[row.code as keyof typeof ISSUES]?.label ?? row.code,
     }));
-  const message = await client.messages.create({
+  const response = await client.models.generateContent({
     model: MODEL,
-    max_tokens: 700,
-    stream: false,
-    system:
-      "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable insight for Daybot.",
-    messages: [
-      {
-        role: "user",
-        content: JSON.stringify({
-          audits: aggregate.auditCount,
-          average_score: aggregate.averageScore,
-          average_category_scores: aggregate.averageCategoryScores,
-          recurring_problems: issueRows(aggregate.problems),
-          recurring_strengths: issueRows(aggregate.strengths),
-          output: { insights: "3–5 sentences, grounded in the supplied counts" },
-        }),
-      },
-    ],
+    contents: JSON.stringify({
+      audits: aggregate.auditCount,
+      average_score: aggregate.averageScore,
+      average_category_scores: aggregate.averageCategoryScores,
+      recurring_problems: issueRows(aggregate.problems),
+      recurring_strengths: issueRows(aggregate.strengths),
+      output: { insights: "3–5 sentences, grounded in the supplied counts" },
+    }),
+    config: {
+      systemInstruction:
+        "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable insight for Daybot.",
+      responseMimeType: "application/json",
+      maxOutputTokens: 700,
+    },
   });
-  const text = message.content.find((block) => block.type === "text");
-  if (!text || text.type !== "text") throw new Error("Claude returned no insight text.");
-  const parsed = insightSchema.parse(JSON.parse(text.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")));
+  if (!response.text) throw new Error("Gemini returned no insight text.");
+  const parsed = insightSchema.parse(
+    JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")),
+  );
   const generatedAt = new Date().toISOString();
   insightCache.set(key, { insights: parsed.insights, generatedAt, expiresAt: Date.now() + CACHE_TTL_MS });
 

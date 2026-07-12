@@ -41,7 +41,7 @@ OFFLINE  scripts/build_kb.mjs → public/kb.json
          + 20 hand-written CRO guideline cards, each embedded once.
 
 RUNTIME  POST /api/audit  (Person A's pipeline):
-         CRAWL → RULES → RETRIEVE (cosine vs kb.json) → METRICS → SYNTH (Claude)
+         CRAWL → RULES → RETRIEVE (cosine vs kb.json) → METRICS → SYNTH (Gemini 3.1 Flash-Lite)
          → SCORE → PERSIST (Supabase audits + findings)
 
 READ     /report/[id] and /patterns read Supabase (lib/data.ts), falling back to

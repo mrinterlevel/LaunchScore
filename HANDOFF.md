@@ -35,7 +35,7 @@ pipeline plugs in. Nothing here should require you to touch UI files.
 
 1. **`app/api/audit/route.ts`** is now Person A's live pipeline. It validates and
    normalizes the submitted URL, crawls the storefront, runs rules and retrieval,
-   synthesizes evidence-grounded findings when Claude is configured, persists to
+   synthesizes evidence-grounded findings when Gemini is configured, persists to
    Supabase, then returns `{ id, report }` using the shared `Report` contract. The
    home page uses `id` to redirect to `/report/{id}`; without Supabase it uses the
    existing fixture fallback at `demo`.

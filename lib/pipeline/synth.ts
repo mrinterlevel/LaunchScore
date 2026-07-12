@@ -1,5 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import type { Message } from "@anthropic-ai/sdk/resources/messages/messages";
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
 import { ALLOWED_CODES, ISSUES } from "@/lib/taxonomy";
@@ -8,7 +7,7 @@ import type { Report, Strength, Weakness } from "@/lib/types";
 import type { ProductRetrieval } from "./types";
 
 const MAX_PRODUCTS_TO_SYNTHESIZE = 8;
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
+const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite";
 
 const strengthSchema = z.object({
   code: z.string(),
@@ -35,29 +34,26 @@ function parseJson(text: string): unknown {
   return JSON.parse(unwrapped);
 }
 
-function responseText(message: Message): string {
-  const text = message.content.find((block) => block.type === "text");
-  if (!text || text.type !== "text") throw new Error("Claude returned no text content.");
-  return text.text;
-}
-
-async function askClaude<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
-  const client = new Anthropic({ apiKey });
+async function askGemini<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
+  const client = new GoogleGenAI({ apiKey });
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const message = await client.messages.create({
+      const response = await client.models.generateContent({
         model: MODEL,
-        max_tokens: 1_200,
-        stream: false,
-        system:
-          "You are an evidence-grounded ecommerce launch auditor. Use only the evidence supplied. Return only valid JSON with no markdown.",
-        messages: [{ role: "user", content: prompt }],
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are an evidence-grounded ecommerce launch auditor. Use only the evidence supplied. Return only valid JSON with no markdown.",
+          responseMimeType: "application/json",
+          maxOutputTokens: 1_200,
+        },
       });
-      return schema.parse(parseJson(responseText(message)));
+      if (!response.text) throw new Error("Gemini returned no text content.");
+      return schema.parse(parseJson(response.text));
     } catch (error) {
       lastError = error;
     }
@@ -149,7 +145,7 @@ function productPrompt(
 }
 
 export async function synthesizeReport(report: Report, retrievals: ProductRetrieval[]): Promise<Report> {
-  if (!process.env.ANTHROPIC_API_KEY) return report;
+  if (!process.env.GEMINI_API_KEY) return report;
 
   const next: Report = structuredClone(report);
   const retrievalByIndex = new Map(retrievals.map((retrieval) => [retrieval.productIndex, retrieval]));
@@ -157,7 +153,7 @@ export async function synthesizeReport(report: Report, retrievals: ProductRetrie
     next.products.slice(0, MAX_PRODUCTS_TO_SYNTHESIZE).map(async (product, index) => {
       const input = productPrompt(next, index, retrievalByIndex.get(index));
       try {
-        const synthesized = await askClaude(input.prompt, productSynthesisSchema);
+        const synthesized = await askGemini(input.prompt, productSynthesisSchema);
         return {
           index,
           strengths: synthesized.strengths
@@ -180,7 +176,7 @@ export async function synthesizeReport(report: Report, retrievals: ProductRetrie
   }
 
   try {
-    const summary = await askClaude(
+    const summary = await askGemini(
       JSON.stringify({
         store_url: next.store_url,
         score: next.score,

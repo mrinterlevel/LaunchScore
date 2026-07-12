@@ -36,10 +36,12 @@ const fixtureFetch: FetchImplementation = async (input) => {
 };
 
 describe("runAudit", () => {
-  it("produces a real contract-valid report without Supabase or Claude configured", async () => {
+  it("produces a real contract-valid report without Supabase or Gemini configured", async () => {
     const result = await runAudit(home, {
       fetchImpl: fixtureFetch,
       validateTarget: async () => undefined,
+      persist: async () => null,
+      synthesize: async (report) => report,
     });
 
     expect(result).toMatchObject({ id: "demo", persisted: false });

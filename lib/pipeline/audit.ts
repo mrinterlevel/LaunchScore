@@ -14,14 +14,24 @@ export interface AuditRunResult {
   warnings: string[];
 }
 
-export async function runAudit(storeUrl: string, crawlOptions?: CrawlOptions): Promise<AuditRunResult> {
+export interface AuditRunOptions extends CrawlOptions {
+  persist?: typeof persistAudit;
+  synthesize?: typeof synthesizeReport;
+}
+
+export async function runAudit(storeUrl: string, options: AuditRunOptions = {}): Promise<AuditRunResult> {
+  const {
+    persist = persistAudit,
+    synthesize = synthesizeReport,
+    ...crawlOptions
+  } = options;
   const snapshot = await crawlStore(storeUrl, crawlOptions);
   const deterministicRules = runRules(snapshot);
   const retrievals = await retrieveProductEvidence(snapshot);
   const allRules = [...deterministicRules, ...deriveRetrievalRules(snapshot, retrievals)];
   const deterministicReport = buildDeterministicReport(snapshot, allRules, retrievals);
-  const report = await synthesizeReport(deterministicReport, retrievals);
-  const persistedId = await persistAudit(report);
+  const report = await synthesize(deterministicReport, retrievals);
+  const persistedId = await persist(report);
 
   return {
     id: persistedId ?? "demo",
