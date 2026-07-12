@@ -90,7 +90,7 @@ async function main() {
   const provider = embeddingProvider();
   if (provider !== "gemini") {
     throw new Error(
-      "GEMINI_API_KEY must be set in .env.local before rebuilding the knowledge base. " +
+      "GEMINI_API_KEY or GOOGLE_API_KEY must be set in .env.local before rebuilding the knowledge base. " +
         "This prevents writing local fallback vectors that cannot be used by a Gemini-enabled audit runtime.",
     );
   }

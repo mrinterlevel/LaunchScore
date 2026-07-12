@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
+import { getGeminiApiKey } from "@/lib/gemini-config.mjs";
 import { rateLimitGemini } from "@/lib/gemini-rate-limit.mjs";
 import { ALLOWED_CODES, ISSUES } from "@/lib/taxonomy";
 import type { Report, Strength, Weakness } from "@/lib/types";
@@ -36,8 +37,8 @@ function parseJson(text: string): unknown {
 }
 
 async function askGemini<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) throw new Error("Set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini synthesis.");
   const client = new GoogleGenAI({ apiKey });
   let lastError: unknown;
 
@@ -148,7 +149,7 @@ function productPrompt(
 }
 
 export async function synthesizeReport(report: Report, retrievals: ProductRetrieval[]): Promise<Report> {
-  if (!process.env.GEMINI_API_KEY) return report;
+  if (!getGeminiApiKey()) return report;
 
   const next: Report = structuredClone(report);
   const retrievalByIndex = new Map(retrievals.map((retrieval) => [retrieval.productIndex, retrieval]));

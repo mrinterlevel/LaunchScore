@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
+import { getGeminiApiKey } from "@/lib/gemini-config.mjs";
 import { rateLimitGemini } from "@/lib/gemini-rate-limit.mjs";
 import { ISSUES } from "@/lib/taxonomy";
 import { CATEGORIES, type CategoryScores, type Severity } from "@/lib/types";
@@ -110,7 +111,8 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
 
   const aggregate = parseAggregate(audits ?? [], findings ?? []);
   if (!aggregate.auditCount) return { insights: null, generatedAt: null, source: "empty" };
-  if (!process.env.GEMINI_API_KEY) return { insights: null, generatedAt: null, source: "unavailable" };
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) return { insights: null, generatedAt: null, source: "unavailable" };
 
   const key = fingerprint(aggregate);
   const cached = insightCache.get(key);
@@ -118,7 +120,7 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
     return { insights: cached.insights, generatedAt: cached.generatedAt, source: "cache" };
   }
 
-  const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const client = new GoogleGenAI({ apiKey });
   const issueRows = (rows: AggregateRow[]) =>
     rows.slice(0, 8).map((row) => ({
       ...row,
