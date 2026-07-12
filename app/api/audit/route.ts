@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import type { ApiError, AuditRequest, AuditResponse } from "@/lib/types";
-import { createMockReport } from "@/lib/mock-audit";
+import { runAudit } from "@/lib/pipeline/audit";
+import { CrawlError } from "@/lib/pipeline/crawler";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function errorResponse(code: string, message: string, status: number) {
   return NextResponse.json<ApiError>({ error: { code, message } }, { status });
@@ -50,10 +54,15 @@ export async function POST(
     );
   }
 
-  // Hour 1 returns a contract-accurate report while the real pipeline is layered
-  // in from Hour 2 onward. `id: demo` preserves the fixture-backed report flow.
-  return NextResponse.json<AuditResponse>({
-    id: "demo",
-    report: createMockReport(storeUrl),
-  });
+  try {
+    const result = await runAudit(storeUrl);
+    return NextResponse.json<AuditResponse>({ id: result.id, report: result.report });
+  } catch (error) {
+    if (error instanceof CrawlError) {
+      const status = error.code === "INVALID_URL" || error.code === "UNSAFE_TARGET" ? 400 : 502;
+      return errorResponse(error.code, error.message, status);
+    }
+    const message = error instanceof Error ? error.message : "The audit pipeline failed.";
+    return errorResponse("AUDIT_FAILED", message, 500);
+  }
 }

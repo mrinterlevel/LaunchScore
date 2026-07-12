@@ -1,0 +1,60 @@
+import { getSupabase } from "@/lib/supabase";
+import type { FindingRow, Report } from "@/lib/types";
+
+function findingRows(report: Report, auditId: string): FindingRow[] {
+  const rows: FindingRow[] = [];
+  const add = (
+    findings: Array<{ code: string; severity?: "high" | "med" | "low" }>,
+    type: "strength" | "weakness",
+    productTitle: string | null,
+  ) => {
+    for (const finding of findings) {
+      rows.push({
+        audit_id: auditId,
+        code: finding.code,
+        type,
+        severity: type === "weakness" ? finding.severity ?? "med" : null,
+        product_title: productTitle,
+      });
+    }
+  };
+
+  add(report.store_strengths, "strength", null);
+  add(report.store_weaknesses, "weakness", null);
+  for (const product of report.products) {
+    add(product.strengths, "strength", product.title);
+    add(product.weaknesses, "weakness", product.title);
+  }
+  return rows;
+}
+
+export async function persistAudit(report: Report): Promise<string | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const { data: audit, error: auditError } = await supabase
+    .from("audits")
+    .insert({
+      store_url: report.store_url,
+      score: report.score,
+      category_scores: report.category_scores,
+      report,
+    })
+    .select("id")
+    .single();
+
+  if (auditError || !audit) {
+    throw new Error(`Could not persist audit: ${auditError?.message ?? "no audit id returned"}`);
+  }
+
+  const rows = findingRows(report, audit.id);
+  if (!rows.length) return audit.id;
+
+  const { error: findingsError } = await supabase.from("findings").insert(rows);
+  if (findingsError) {
+    await supabase.from("audits").delete().eq("id", audit.id);
+    throw new Error(`Could not persist findings: ${findingsError.message}`);
+  }
+
+  return audit.id;
+}
