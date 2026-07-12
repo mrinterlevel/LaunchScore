@@ -11,6 +11,29 @@ export default async function PatternsPage() {
   const p = await getPatterns();
   const live = supabaseConfigured();
 
+  // Live DB connected but no audits run yet — invite the first audit rather than
+  // rendering "across 0 audited stores" with empty bars.
+  if (live && p.audit_count === 0) {
+    return (
+      <div className="mx-auto mt-10 max-w-lg text-center">
+        <div className="text-4xl">📊</div>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight">No audits yet</h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+          The Patterns dashboard aggregates every audit into cross-store insights for Daybot. Run
+          your first audit and the recurring problems, strengths, and average scores will populate
+          here automatically.
+        </p>
+        <Link
+          href="/"
+          className="mt-6 inline-block rounded-xl px-5 py-3 text-sm font-semibold text-white"
+          style={{ background: "linear-gradient(135deg,#6366f1,#0ea5e9)" }}
+        >
+          Audit a store →
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div>

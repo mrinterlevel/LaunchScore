@@ -69,11 +69,18 @@ export default async function ReportPage({ params }: { params: { id: string } })
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
           Products ({r.products.length})
         </h2>
-        <div className="flex flex-col gap-3">
-          {r.products.map((p, i) => (
-            <ProductAccordion key={i} product={p} map={r.evidence} defaultOpen={i === 0} />
-          ))}
-        </div>
+        {r.products.length === 0 ? (
+          <p className="panel p-4 text-sm" style={{ color: "var(--muted)" }}>
+            The crawler didn&apos;t find any product pages to audit on this store. Store-level trust,
+            SEO, and catalog checks above still apply.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {r.products.map((p, i) => (
+              <ProductAccordion key={i} product={p} map={r.evidence} defaultOpen={i === 0} />
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="flex items-center justify-between border-t pt-6" style={{ borderColor: "var(--border)" }}>

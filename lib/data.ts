@@ -113,12 +113,18 @@ export async function getPatterns(): Promise<PatternsData> {
       .sort((a, b) => b.stores_affected - a.stores_affected || b.n - a.n);
   };
 
+  const problems = group("weakness");
+  const strengths = group("strength");
+
+  const { composeInsights } = await import("./insights");
   return {
     audit_count,
     avg_score,
     avg_category_scores,
-    problems: group("weakness"),
-    strengths: group("strength"),
-    insights: null, // Person A's /patterns insight route can generate + cache this
+    problems,
+    strengths,
+    // Deterministic baseline so the panel always renders on real data. Person A
+    // may override this field with a cached Claude narrative over the aggregate.
+    insights: composeInsights({ audit_count, avg_score, avg_category_scores, problems, strengths }),
   };
 }
