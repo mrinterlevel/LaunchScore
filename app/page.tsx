@@ -51,7 +51,7 @@ export default function Home() {
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
           Paste a Daybot store URL. LaunchScore audits it against real successful listings and
-          returns a 0–100 score with evidence-backed fixes — every finding grounded in a rule check
+          returns an A–D launch grade with evidence-backed fixes — every finding grounded in a rule check
           or a retrieved comparable.
         </p>
       </div>

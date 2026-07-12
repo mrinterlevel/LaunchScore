@@ -3,6 +3,7 @@ import { getPatterns } from "@/lib/data";
 import { supabaseConfigured } from "@/lib/supabase";
 import PatternBars from "@/components/PatternBars";
 import CategoryBars from "@/components/CategoryBars";
+import { scoreGrade } from "@/lib/grading";
 import { scoreColor } from "@/lib/ui";
 
 export const dynamic = "force-dynamic";
@@ -65,15 +66,15 @@ export default async function PatternsPage() {
         </div>
         <div className="panel p-4">
           <div className="text-xs" style={{ color: "var(--muted)" }}>
-            Avg LaunchScore
+            Average grade
           </div>
-          <div className="mt-1 text-3xl font-bold tabular-nums" style={{ color: scoreColor(p.avg_score) }}>
-            {p.avg_score}
+          <div className="mt-1 text-3xl font-bold" style={{ color: scoreColor(p.avg_score) }}>
+            {scoreGrade(p.avg_score)}
           </div>
         </div>
         <div className="panel col-span-2 p-4 sm:col-span-1">
           <div className="mb-2 text-xs" style={{ color: "var(--muted)" }}>
-            Avg category scores
+            Average category grades
           </div>
           <CategoryBars scores={p.avg_category_scores} />
         </div>

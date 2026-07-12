@@ -34,7 +34,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
           <ScoreDial score={r.score} />
         </div>
         <div className="w-full flex-1">
-          <div className="mb-3 text-sm font-medium">Category scores</div>
+          <div className="mb-3 text-sm font-medium">Category grades</div>
           <CategoryBars scores={r.category_scores} />
         </div>
       </div>

@@ -1,9 +1,11 @@
-import { scoreColor, scoreVerdict } from "@/lib/ui";
+import { scoreGrade } from "@/lib/grading";
+import { scoreColor } from "@/lib/ui";
 
 // A semicircular score gauge (0–100). Pure SVG, no client JS needed.
 export default function ScoreDial({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score));
   const color = scoreColor(clamped);
+  const grade = scoreGrade(clamped);
 
   // Semicircle arc from 180deg to 0deg. r=80, center (100,100).
   const r = 80;
@@ -14,7 +16,12 @@ export default function ScoreDial({ score }: { score: number }) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg viewBox="0 0 200 116" className="w-64 max-w-full">
+      <svg
+        viewBox="0 0 200 116"
+        className="w-64 max-w-full"
+        role="img"
+        aria-label={`Launch grade ${grade}`}
+      >
         {/* track */}
         <path
           d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
@@ -40,14 +47,14 @@ export default function ScoreDial({ score }: { score: number }) {
           fontWeight="700"
           fill="var(--text)"
         >
-          {clamped}
+          {grade}
         </text>
         <text x={cx} y={cy + 12} textAnchor="middle" fontSize="11" fill="var(--muted)">
-          / 100
+          Launch grade
         </text>
       </svg>
       <div className="mt-1 text-sm font-medium" style={{ color }}>
-        {scoreVerdict(clamped)}
+        Grade {grade}
       </div>
     </div>
   );

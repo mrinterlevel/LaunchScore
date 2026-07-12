@@ -1,5 +1,6 @@
 // lib/ui.ts — small presentational helpers shared across UI components.
 import type { Category, Severity } from "./types";
+import { gradeColor } from "./grading";
 
 export const CATEGORY_COLOR: Record<Category, string> = {
   trust: "#6366f1",
@@ -17,18 +18,10 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   catalog: "Catalog",
 };
 
-// Score -> color. Red below 50, amber 50–74, green 75+.
+// Score colors follow the A–D grade bands. Raw scores remain internal to
+// scoring, chart widths, and aggregation; the UI displays the grade instead.
 export function scoreColor(score: number): string {
-  if (score >= 75) return "#22c55e";
-  if (score >= 50) return "#f59e0b";
-  return "#ef4444";
-}
-
-export function scoreVerdict(score: number): string {
-  if (score >= 85) return "Launch-ready";
-  if (score >= 70) return "Nearly there";
-  if (score >= 50) return "Needs work";
-  return "Not ready to launch";
+  return gradeColor(score);
 }
 
 export const SEVERITY_COLOR: Record<Severity, string> = {
