@@ -14,8 +14,13 @@ import { getSupabase } from "./supabase";
 export async function getAudit(id: string): Promise<Audit | null> {
   const sb = getSupabase();
   if (!sb) {
+    // No DB: serve a real audit from the in-memory store if we have one,
+    // otherwise fall back to the demo fixture so the app still renders.
+    const { getMemAudit } = await import("./auditStore");
+    const mem = getMemAudit(id);
+    if (mem) return mem;
     const { FAKE_AUDIT } = await import("./fixtures");
-    return id === FAKE_AUDIT.id || id === "demo" ? FAKE_AUDIT : FAKE_AUDIT;
+    return FAKE_AUDIT;
   }
   const { data, error } = await sb.from("audits").select("*").eq("id", id).single();
   if (error || !data) return null;

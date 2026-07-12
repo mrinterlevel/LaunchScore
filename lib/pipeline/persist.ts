@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { putMemAudit } from "@/lib/auditStore";
 import type { FindingRow, Report } from "@/lib/types";
 
 function findingRows(report: Report, auditId: string): FindingRow[] {
@@ -30,7 +31,9 @@ function findingRows(report: Report, auditId: string): FindingRow[] {
 
 export async function persistAudit(report: Report): Promise<string | null> {
   const supabase = getSupabase();
-  if (!supabase) return null;
+  // No DB configured: keep the report viewable via the in-memory fallback store
+  // (dev/demo). Returns a real id so /report/[id] shows THIS audit, not the fixture.
+  if (!supabase) return putMemAudit(report);
 
   const { data: audit, error: auditError } = await supabase
     .from("audits")
