@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getSupabaseServerKey } from "./supabase";
+import { getSupabaseServerKey, normalizeSupabaseUrl } from "./supabase";
 
 const originalSecret = process.env.SUPABASE_SECRET_KEY;
 const originalServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -22,5 +22,13 @@ describe("getSupabaseServerKey", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
 
     expect(getSupabaseServerKey()).toBe("secret");
+  });
+});
+
+describe("normalizeSupabaseUrl", () => {
+  it("converts a copied REST endpoint to the project base URL", () => {
+    expect(normalizeSupabaseUrl("https://project.supabase.co/rest/v1/")).toBe(
+      "https://project.supabase.co/",
+    );
   });
 });

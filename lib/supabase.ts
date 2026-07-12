@@ -13,6 +13,23 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let _client: SupabaseClient | null | undefined;
 
+export function normalizeSupabaseUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  try {
+    const url = new URL(value.trim());
+    // The dashboard's REST endpoint is commonly copied as
+    // https://<ref>.supabase.co/rest/v1. createClient expects the project root
+    // and appends /rest/v1 itself, so normalize that endpoint to the root.
+    if (url.pathname.replace(/\/+$/, "") === "/rest/v1") url.pathname = "/";
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 export function getSupabaseServerKey(): string | undefined {
   return (
     process.env.SUPABASE_SECRET_KEY ||
@@ -23,7 +40,7 @@ export function getSupabaseServerKey(): string | undefined {
 
 export function getSupabase(): SupabaseClient | null {
   if (_client !== undefined) return _client;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const key = getSupabaseServerKey();
   _client = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
   return _client;
