@@ -16,8 +16,8 @@ Daybot Commerce Hackathon — July 2026.
 
 ```bash
 npm install
-cp .env.example .env.local     # optional — app runs on fixtures without any keys
-npm run build:kb               # builds public/kb.json (offline, ~1 min)
+cp .env.example .env.local     # add GEMINI_API_KEY and Supabase values
+npm run build:kb               # builds Gemini vectors in public/kb.json (offline, ~1 min)
 npm run dev                    # http://localhost:3000
 ```
 

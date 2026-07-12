@@ -12,7 +12,9 @@ import type {
   StoreSnapshot,
 } from "./types";
 
-const PRODUCT_LIMIT = 12;
+// One audit then makes at most 8 embedding calls + 8 product summaries + one
+// store summary, leaving room under Gemini's 20 requests/minute free tier.
+const PRODUCT_LIMIT = 8;
 const POLICY_LIMIT = 5;
 const DEFAULT_TIMEOUT_MS = 12_000;
 const DEFAULT_MAX_BODY_BYTES = 1_500_000;

@@ -31,8 +31,24 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: url.trim() }),
       });
-      if (!res.ok) throw new Error(`Audit failed (${res.status})`);
-      const { id } = await res.json();
+      const payload: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof payload.error === "object" &&
+          payload.error !== null &&
+          "message" in payload.error &&
+          typeof payload.error.message === "string"
+            ? payload.error.message
+            : `Audit failed (${res.status})`;
+        throw new Error(message);
+      }
+      const id =
+        typeof payload === "object" && payload !== null && "id" in payload
+          ? payload.id
+          : null;
       if (!id) throw new Error("No audit id returned");
       router.push(`/report/${id}`);
     } catch (err: any) {

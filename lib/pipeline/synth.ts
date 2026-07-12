@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
+import { rateLimitGemini } from "@/lib/gemini-rate-limit.mjs";
 import { ALLOWED_CODES, ISSUES } from "@/lib/taxonomy";
 import type { Report, Strength, Weakness } from "@/lib/types";
 
@@ -42,16 +43,18 @@ async function askGemini<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await client.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-        config: {
-          systemInstruction:
-            "You are an evidence-grounded ecommerce launch auditor. Use only the evidence supplied. Return only valid JSON with no markdown.",
-          responseMimeType: "application/json",
-          maxOutputTokens: 1_200,
-        },
-      });
+      const response = await rateLimitGemini(() =>
+        client.models.generateContent({
+          model: MODEL,
+          contents: prompt,
+          config: {
+            systemInstruction:
+              "You are an evidence-grounded ecommerce launch auditor. Use only the evidence supplied. Return only valid JSON with no markdown.",
+            responseMimeType: "application/json",
+            maxOutputTokens: 1_200,
+          },
+        }),
+      );
       if (!response.text) throw new Error("Gemini returned no text content.");
       return schema.parse(parseJson(response.text));
     } catch (error) {

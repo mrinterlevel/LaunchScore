@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
+import { rateLimitGemini } from "@/lib/gemini-rate-limit.mjs";
 import { ISSUES } from "@/lib/taxonomy";
 import { CATEGORIES, type CategoryScores, type Severity } from "@/lib/types";
 import { getSupabase } from "@/lib/supabase";
@@ -123,23 +124,25 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
       ...row,
       label: ISSUES[row.code as keyof typeof ISSUES]?.label ?? row.code,
     }));
-  const response = await client.models.generateContent({
-    model: MODEL,
-    contents: JSON.stringify({
-      audits: aggregate.auditCount,
-      average_score: aggregate.averageScore,
-      average_category_scores: aggregate.averageCategoryScores,
-      recurring_problems: issueRows(aggregate.problems),
-      recurring_strengths: issueRows(aggregate.strengths),
-      output: { insights: "3–5 sentences, grounded in the supplied counts" },
+  const response = await rateLimitGemini(() =>
+    client.models.generateContent({
+      model: MODEL,
+      contents: JSON.stringify({
+        audits: aggregate.auditCount,
+        average_score: aggregate.averageScore,
+        average_category_scores: aggregate.averageCategoryScores,
+        recurring_problems: issueRows(aggregate.problems),
+        recurring_strengths: issueRows(aggregate.strengths),
+        output: { insights: "3–5 sentences, grounded in the supplied counts" },
+      }),
+      config: {
+        systemInstruction:
+          "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable insight for Daybot.",
+        responseMimeType: "application/json",
+        maxOutputTokens: 700,
+      },
     }),
-    config: {
-      systemInstruction:
-        "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable insight for Daybot.",
-      responseMimeType: "application/json",
-      maxOutputTokens: 700,
-    },
-  });
+  );
   if (!response.text) throw new Error("Gemini returned no insight text.");
   const parsed = insightSchema.parse(
     JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")),

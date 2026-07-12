@@ -87,7 +87,15 @@ async function fetchStore(store) {
 }
 
 async function main() {
-  console.log(`Embedding provider: ${embeddingProvider()}`);
+  const provider = embeddingProvider();
+  if (provider !== "gemini") {
+    throw new Error(
+      "GEMINI_API_KEY must be set in .env.local before rebuilding the knowledge base. " +
+        "This prevents writing local fallback vectors that cannot be used by a Gemini-enabled audit runtime.",
+    );
+  }
+
+  console.log(`Embedding provider: ${provider}`);
   const items = [];
 
   // Corpus A — listings

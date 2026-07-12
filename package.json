@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "build:kb": "node scripts/build_kb.mjs"
+    "build:kb": "node --env-file=.env.local scripts/build_kb.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",
