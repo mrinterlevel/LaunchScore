@@ -1,14 +1,12 @@
 # LaunchScore
 
-**RAG-grounded launch auditor + ecosystem patterns dashboard for Daybot stores.**
+**RAG-grounded launch auditor with a cross-store patterns dashboard.**
 
-Paste a Daybot store URL → get a LaunchScore (0–100) and an evidence-backed report of
-what's good and what's bad. Every finding is grounded in either a deterministic rule
-check or a comparison against real successful listings retrieved via RAG. Then the
-**Patterns** dashboard aggregates every audit into product feedback for Daybot itself —
-_"8 of 9 audited stores ship sub-80-word descriptions; 0% ship with reviews."_
-
-Daybot Commerce Hackathon — July 2026.
+Paste a store URL to get a LaunchScore (0–100) and an evidence-backed report of its
+launch readiness. The A–D grade evaluates the audited store itself—not its platform or
+site builder. Every finding is grounded in a deterministic rule check or a comparison
+against real successful listings retrieved via RAG. The **Patterns** dashboard aggregates
+only real persisted audits.
 
 ---
 
@@ -21,10 +19,9 @@ npm run build:kb               # builds Gemini vectors in public/kb.json (offlin
 npm run dev                    # http://localhost:3000
 ```
 
-With **no** environment variables the app is fully runnable: it uses a deterministic
-local embedding and serves fixture data for `/report` and `/patterns`. Add a Gemini key,
-rebuild the KB, and add Supabase keys to enable real retrieval, synthesis, persistence,
-and aggregation.
+Without Supabase, a freshly-run audit remains viewable only for the current process.
+Add Gemini and Supabase keys to enable persistent retrieval, synthesis, and cross-store
+aggregation. The app never substitutes sample audits.
 
 ## Pages
 
@@ -32,21 +29,20 @@ and aggregation.
 |----------------|------------|
 | `/`            | URL input → spinner → redirect to the report |
 | `/report/[id]` | Score dial, category bars, executive summary, per-product accordion with evidence expanders |
-| `/patterns`    | The Daybot view — recurring problems, recurring strengths, avg category scores, insights |
+| `/patterns`    | Recurring problems, recurring strengths, average category scores, and insights |
 
 ## Architecture
 
 ```
 OFFLINE  scripts/build_kb.mjs → public/kb.json
-         ~120 products from 12 successful Shopify stores (/collections/all/products.json)
+         ~120 products from established ecommerce stores via product feeds
          + 20 hand-written CRO guideline cards, each embedded once.
 
 RUNTIME  POST /api/audit  (Person A's pipeline):
          CRAWL → RULES → RETRIEVE (cosine vs kb.json) → METRICS → SYNTH (Gemini 3.1 Flash-Lite)
          → SCORE → PERSIST (Supabase audits + findings)
 
-READ     /report/[id] and /patterns read Supabase (lib/data.ts), falling back to
-         fixtures when it isn't configured.
+READ     /report/[id] and /patterns read real persisted audits from Supabase.
 ```
 
 The whole "vector store" is `public/kb.json` + brute-force cosine in `lib/kb.ts` —

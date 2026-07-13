@@ -1,12 +1,12 @@
 // lib/insights.ts
 //
-// Deterministic "Insights for Daybot" composer. Turns the aggregate patterns
+// Deterministic cross-store insight composer. Turns the aggregate patterns
 // data into a 2–4 sentence narrative with zero external dependencies, so the
 // insights panel always renders on real data (the LLM version in the plan is
 // the first cut-item; this is the always-on baseline).
 //
-// Person A may later replace getPatterns().insights with a cached Claude call
-// over the same aggregate — same field, richer prose. This stays as fallback.
+// The generated insight route may replace getPatterns().insights with a cached
+// model response over the same aggregate. This stays as an always-on fallback.
 
 import type { Category } from "./types";
 import { scoreGrade } from "./grading";
@@ -35,11 +35,11 @@ export function composeInsights(a: AggregateForInsights): string | null {
     const universal = topProblem.stores_affected === n;
     sentences.push(
       universal
-        ? `Across ${n} audited Daybot ${plural(n, "store")}, ${lower(topProblem.label)} shows up in every single one — the most pervasive gap in the ecosystem.`
-        : `Across ${n} audited Daybot ${plural(n, "store")}, ${lower(topProblem.label)} is the most common gap, affecting ${topProblem.stores_affected} of ${n} ${plural(topProblem.stores_affected, "store")} (${share}%).`
+        ? `Across ${n} audited ${plural(n, "store")}, ${lower(topProblem.label)} shows up in every single one — the most pervasive gap.`
+        : `Across ${n} audited ${plural(n, "store")}, ${lower(topProblem.label)} is the most common gap, affecting ${topProblem.stores_affected} of ${n} ${plural(topProblem.stores_affected, "store")} (${share}%).`
     );
   } else {
-    sentences.push(`Across ${n} audited Daybot ${plural(n, "store")}, no recurring problems surfaced.`);
+    sentences.push(`Across ${n} audited ${plural(n, "store")}, no recurring problems surfaced.`);
   }
 
   // 2. A second widespread problem, if it's also broad.
@@ -50,11 +50,11 @@ export function composeInsights(a: AggregateForInsights): string | null {
     );
   }
 
-  // 3. What Daybot already does well (lead with green — it reads as analysis).
+  // 3. The strongest recurring signal.
   const topStrength = a.strengths[0];
   if (topStrength) {
     sentences.push(
-      `Daybot's templates reliably get ${lower(topStrength.label)} right (${topStrength.stores_affected} of ${n} ${plural(topStrength.stores_affected, "store")}), so the foundations are sound.`
+      `${cap(lower(topStrength.label))} is a recurring strength (${topStrength.stores_affected} of ${n} ${plural(topStrength.stores_affected, "store")}).`
     );
   }
 
@@ -62,7 +62,7 @@ export function composeInsights(a: AggregateForInsights): string | null {
   const weakest = weakestCategory(a.avg_category_scores);
   if (weakest && topProblem) {
     sentences.push(
-      `The weakest category on average is ${CATEGORY_LABEL[weakest.cat]} (grade ${scoreGrade(weakest.score)}); templating richer ${categoryFix(topProblem.category)} would lift the average launch grade above its current ${scoreGrade(a.avg_score)}.`
+      `The weakest category on average is ${CATEGORY_LABEL[weakest.cat]} (grade ${scoreGrade(weakest.score)}); improving ${categoryFix(topProblem.category)} would raise the average store grade above its current ${scoreGrade(a.avg_score)}.`
     );
   }
 

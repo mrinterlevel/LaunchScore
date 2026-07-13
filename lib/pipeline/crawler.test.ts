@@ -52,7 +52,7 @@ describe("crawlStore", () => {
     expect(snapshot.contacts).toContain("mailto:hello@shop.example");
   });
 
-  it("uses Open Graph product metadata when Product JSON-LD is absent", async () => {
+  it("uses Open Graph product fields when Product JSON-LD is absent", async () => {
     const home = "https://shop.example/";
     const product = "https://shop.example/products/mug";
     const snapshot = await crawlStore(home, {

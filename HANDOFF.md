@@ -11,11 +11,11 @@ pipeline plugs in. Nothing here should require you to touch UI files.
   vectors compatible with the Gemini-enabled audit runtime.
 - **UI** — home (`app/page.tsx`), report (`app/report/[id]/page.tsx`), patterns
   (`app/patterns/page.tsx`), and all `components/*`.
-- **Read-side data** — `lib/data.ts` (`getAudit`, `getPatterns`) reads Supabase and
-  falls back to `lib/fixtures.ts` when it isn't configured.
+- **Read-side data** — `lib/data.ts` (`getAudit`, `getPatterns`) reads Supabase. Without
+  it, only a real audit from the current process can be viewed; patterns remain empty.
 - Scaffold + config (package.json, tsconfig, tailwind, etc.).
 
-`npm run build` passes; all routes render against fixtures with zero env.
+`npm run build` passes; no sample audits are rendered.
 
 ## Shared contracts — do not fork these
 
@@ -38,7 +38,7 @@ pipeline plugs in. Nothing here should require you to touch UI files.
    synthesizes evidence-grounded findings when Gemini is configured, persists to
    Supabase, then returns `{ id, report }` using the shared `Report` contract. The
    home page uses `id` to redirect to `/report/{id}`; without Supabase it uses the
-   existing fixture fallback at `demo`.
+   process-local real report only.
 2. **Persist** into the `audits` + `findings` tables
    (`supabase/migrations/20260712000000_create_audits_and_findings.sql`). One
    `findings` row per finding with its `code`/`type`/`severity`/`product_title` — that's

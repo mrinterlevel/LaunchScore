@@ -10,7 +10,7 @@ export async function GET() {
   try {
     return NextResponse.json(await getAggregateInsight());
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not generate Daybot insights.";
+    const message = error instanceof Error ? error.message : "Could not generate cross-store insights.";
     return NextResponse.json({ error: { code: "INSIGHTS_FAILED", message } }, { status: 500 });
   }
 }

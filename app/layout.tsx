@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "LaunchScore",
   description:
-    "RAG-grounded launch auditor for Daybot stores — evidence-backed findings and cross-store patterns.",
+    "Evidence-backed launch audits and cross-store patterns for ecommerce storefronts.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -38,8 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className="mx-auto max-w-5xl px-5 py-10 text-xs"
           style={{ color: "var(--muted)" }}
         >
-          LaunchScore — Daybot Commerce Hackathon. Findings are grounded in deterministic rule
-          checks and comparables retrieved from real successful listings.
+          LaunchScore — evidence-backed store audits grounded in deterministic rule checks and
+          comparable listings.
         </footer>
       </body>
     </html>

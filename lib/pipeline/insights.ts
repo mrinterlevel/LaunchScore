@@ -139,7 +139,7 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
       }),
       config: {
         systemInstruction:
-          "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable insight for Daybot.",
+        "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable cross-store insight.",
         responseMimeType: "application/json",
         maxOutputTokens: 700,
       },

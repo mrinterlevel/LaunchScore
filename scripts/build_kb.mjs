@@ -1,11 +1,11 @@
 // scripts/build_kb.mjs
 //
-// Run once, offline, before the hackathon clock matters:
+// Run offline to refresh the comparable-listing knowledge base:
 //   node scripts/build_kb.mjs
 //
 // Builds public/kb.json — the entire "vector store". Two corpora:
 //   Corpus A ("listings"): ~120 proven products pulled from ~12 successful
-//                          Shopify DTC stores via /collections/all/products.json
+//                          established ecommerce stores via their product feeds
 //   Corpus B ("guides"):   ~20 hand-written CRO guideline cards (data/guidelines.mjs)
 //
 // Each item is embedded once (see lib/embedding.mjs — real provider if a key is
@@ -21,8 +21,7 @@ import { GUIDELINES } from "../data/guidelines.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, "..", "public", "kb.json");
 
-// ~12 successful Shopify DTC stores spanning the niches Daybot generates.
-// All verified to expose /collections/all/products.json.
+// Reference stores spanning the supported ecommerce niches. All expose product feeds.
 const STORES = [
   { url: "https://www.misen.com", niche: "kitchen" },
   { url: "https://deathwishcoffee.com", niche: "kitchen" },

@@ -1,8 +1,8 @@
 // lib/data.ts
 //
-// Read-side data access for the UI (Person B). Everything here reads from
-// Supabase when configured, and falls back to fixtures otherwise so the app is
-// always demoable. Writes (persisting audits/findings) are Person A's pipeline.
+// Read-side data access for the UI. Everything here reads persisted audits from
+// Supabase. Without a database, an audit remains viewable only for the current
+// process through the in-memory store; no sample records are ever shown.
 
 import type { Audit, Category, CategoryScores, Severity } from "./types";
 import { CATEGORIES } from "./types";
@@ -14,13 +14,9 @@ import { getSupabase } from "./supabase";
 export async function getAudit(id: string): Promise<Audit | null> {
   const sb = getSupabase();
   if (!sb) {
-    // No DB: serve a real audit from the in-memory store if we have one,
-    // otherwise fall back to the demo fixture so the app still renders.
+    // No DB: serve only a real audit generated during this process.
     const { getMemAudit } = await import("./auditStore");
-    const mem = getMemAudit(id);
-    if (mem) return mem;
-    const { FAKE_AUDIT } = await import("./fixtures");
-    return FAKE_AUDIT;
+    return getMemAudit(id);
   }
   const { data, error } = await sb.from("audits").select("*").eq("id", id).single();
   if (error || !data) return null;
@@ -55,19 +51,33 @@ export interface PatternsData {
   insights: string | null; // LLM summary over the aggregate (Person A route may fill/cache)
 }
 
+function emptyPatterns(): PatternsData {
+  return {
+    audit_count: 0,
+    avg_score: 0,
+    avg_category_scores: CATEGORIES.reduce((acc, category) => {
+      acc[category] = 0;
+      return acc;
+    }, {} as CategoryScores),
+    problems: [],
+    strengths: [],
+    insights: null,
+  };
+}
+
 export async function getPatterns(): Promise<PatternsData> {
   const sb = getSupabase();
-  if (!sb) {
-    const { FAKE_PATTERNS } = await import("./fixtures");
-    return FAKE_PATTERNS;
-  }
+  if (!sb) return emptyPatterns();
 
   // Pull the two tables and aggregate in code. The corpus is small (hackathon
   // scale) so a client-side GROUP BY is fine and avoids a DB function.
-  const [{ data: audits }, { data: findings }] = await Promise.all([
+  const [{ data: audits, error: auditsError }, { data: findings, error: findingsError }] = await Promise.all([
     sb.from("audits").select("id, score, category_scores"),
     sb.from("findings").select("code, type, severity, audit_id"),
   ]);
+  if (auditsError || findingsError) {
+    throw new Error(auditsError?.message ?? findingsError?.message ?? "Could not read audit data.");
+  }
 
   const auditRows = audits ?? [];
   const findingRows = findings ?? [];

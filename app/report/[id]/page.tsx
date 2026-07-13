@@ -26,6 +26,9 @@ export default async function ReportPage({ params }: { params: { id: string } })
           {r.products_audited} of {r.products_total} products scored
           {r.products_total > r.product_cap && ` (capped at ${r.product_cap})`}
         </div>
+        <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
+          This grade evaluates this store&apos;s launch readiness, not the platform or tool used to build it.
+        </p>
       </div>
 
       {/* score + categories */}

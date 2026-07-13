@@ -3,8 +3,8 @@
 // Shared Supabase client. Person A writes audits/findings here from the
 // pipeline; Person B reads them for /report and /patterns.
 //
-// Returns null when env vars are absent so the app degrades gracefully to
-// fixtures instead of crashing (see lib/data.ts). Set these to go live:
+// Returns null when env vars are absent. The UI then shows empty states rather
+// than sample data. Set these to persist and aggregate audits:
 //   NEXT_PUBLIC_SUPABASE_URL
 //   SUPABASE_SECRET_KEY  (preferred, server-only; used by the pipeline + reads)
 //   SUPABASE_SERVICE_ROLE_KEY  (legacy server-only fallback)

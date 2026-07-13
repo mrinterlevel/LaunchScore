@@ -41,8 +41,8 @@ function findingRows(report: Report, auditId: string): FindingRow[] {
 
 export async function persistAudit(report: Report): Promise<string | null> {
   const supabase = getSupabase();
-  // No DB configured: keep the report viewable via the in-memory fallback store
-  // (dev/demo). Returns a real id so /report/[id] shows THIS audit, not the fixture.
+  // No DB configured: keep this real report viewable only in the current
+  // process. Returns its actual id; no sample report is substituted.
   if (!supabase) return putMemAudit(report);
 
   const { data: audit, error: auditError } = await supabase

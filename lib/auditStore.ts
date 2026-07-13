@@ -1,14 +1,12 @@
 // lib/auditStore.ts
 //
-// Process-local, in-memory fallback store for audits when Supabase isn't
-// configured. Lets a freshly-run audit be viewed at /report/[id] with ZERO
-// external setup (the whole "runs on no env" promise), instead of the report
-// page falling back to the demo fixture.
+// Process-local, in-memory store for real audits when Supabase isn't
+// configured. It lets a freshly-run audit be viewed at /report/[id] without
+// inventing sample records.
 //
-// Caveats: not shared across processes and not durable — it's a dev/demo
-// convenience. When Supabase IS configured, this is never used (persist writes
-// to the DB and getAudit reads from it). Uses globalThis so the map survives
-// Next.js dev hot-reloads.
+// Caveats: not shared across processes and not durable. When Supabase is
+// configured, this is never used (persist writes to the DB and getAudit reads
+// from it). Uses globalThis so the map survives Next.js dev hot-reloads.
 
 import type { Audit, Report } from "./types";
 

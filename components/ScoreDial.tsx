@@ -20,7 +20,7 @@ export default function ScoreDial({ score }: { score: number }) {
         viewBox="0 0 200 116"
         className="w-64 max-w-full"
         role="img"
-        aria-label={`Launch grade ${grade}`}
+        aria-label={`Audited store grade ${grade}`}
       >
         {/* track */}
         <path
@@ -50,11 +50,11 @@ export default function ScoreDial({ score }: { score: number }) {
           {grade}
         </text>
         <text x={cx} y={cy + 12} textAnchor="middle" fontSize="11" fill="var(--muted)">
-          Launch grade
+          Store grade
         </text>
       </svg>
       <div className="mt-1 text-sm font-medium" style={{ color }}>
-        Grade {grade}
+        Store grade {grade}
       </div>
     </div>
   );

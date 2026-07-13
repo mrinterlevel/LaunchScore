@@ -66,9 +66,9 @@ export default function Home() {
           Is your store actually ready to launch?
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-          Paste a Daybot store URL. LaunchScore audits it against real successful listings and
-          returns an A–D launch grade with evidence-backed fixes — every finding grounded in a rule check
-          or a retrieved comparable.
+          Paste a store URL. LaunchScore audits the store itself against real successful listings and
+          returns an A–D store grade with evidence-backed fixes — not a grade for the platform or tool
+          used to build it.
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export default function Home() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://your-store.myshopify.com"
+              placeholder="https://your-store.com"
               className="flex-1 rounded-xl border px-4 py-3 text-sm outline-none focus:ring-2"
               style={{
                 background: "var(--panel)",
