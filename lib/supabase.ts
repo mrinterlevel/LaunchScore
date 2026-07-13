@@ -13,6 +13,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let _client: SupabaseClient | null | undefined;
 
+export function noStoreSupabaseFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetch(input, { ...init, cache: "no-store" });
+}
+
 export function normalizeSupabaseUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
@@ -42,7 +49,13 @@ export function getSupabase(): SupabaseClient | null {
   if (_client !== undefined) return _client;
   const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const key = getSupabaseServerKey();
-  _client = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  _client =
+    url && key
+      ? createClient(url, key, {
+          auth: { persistSession: false },
+          global: { fetch: noStoreSupabaseFetch },
+        })
+      : null;
   return _client;
 }
 
