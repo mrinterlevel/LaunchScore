@@ -97,6 +97,18 @@ function parseAggregate(
 
 const insightSchema = z.object({ insights: z.string().min(1).max(1_500) });
 
+export function parseInsightResponse(text: string | undefined): string | null {
+  if (!text) return null;
+
+  try {
+    return insightSchema.parse(
+      JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")),
+    ).insights;
+  } catch {
+    return null;
+  }
+}
+
 export async function getAggregateInsight(): Promise<AggregateInsight> {
   const supabase = getSupabase();
   if (!supabase) return { insights: null, generatedAt: null, source: "unconfigured" };
@@ -126,31 +138,35 @@ export async function getAggregateInsight(): Promise<AggregateInsight> {
       ...row,
       label: ISSUES[row.code as keyof typeof ISSUES]?.label ?? row.code,
     }));
-  const response = await rateLimitGemini(() =>
-    client.models.generateContent({
-      model: MODEL,
-      contents: JSON.stringify({
-        audits: aggregate.auditCount,
-        average_score: aggregate.averageScore,
-        average_category_scores: aggregate.averageCategoryScores,
-        recurring_problems: issueRows(aggregate.problems),
-        recurring_strengths: issueRows(aggregate.strengths),
-        output: { insights: "3–5 sentences, grounded in the supplied counts" },
+  try {
+    const response = await rateLimitGemini(() =>
+      client.models.generateContent({
+        model: MODEL,
+        contents: JSON.stringify({
+          audits: aggregate.auditCount,
+          average_score: aggregate.averageScore,
+          average_category_scores: aggregate.averageCategoryScores,
+          recurring_problems: issueRows(aggregate.problems),
+          recurring_strengths: issueRows(aggregate.strengths),
+          output: { insights: "3–5 sentences, grounded in the supplied counts" },
+        }),
+        config: {
+          systemInstruction:
+            "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable cross-store insight.",
+          responseMimeType: "application/json",
+          maxOutputTokens: 700,
+        },
       }),
-      config: {
-        systemInstruction:
-        "You are an ecommerce product analyst. Use only supplied aggregate data. Return only JSON with a concise 3–5 sentence actionable cross-store insight.",
-        responseMimeType: "application/json",
-        maxOutputTokens: 700,
-      },
-    }),
-  );
-  if (!response.text) throw new Error("Gemini returned no insight text.");
-  const parsed = insightSchema.parse(
-    JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")),
-  );
-  const generatedAt = new Date().toISOString();
-  insightCache.set(key, { insights: parsed.insights, generatedAt, expiresAt: Date.now() + CACHE_TTL_MS });
+    );
+    const insights = parseInsightResponse(response.text);
+    if (!insights) return { insights: null, generatedAt: null, source: "unavailable" };
 
-  return { insights: parsed.insights, generatedAt, source: "generated" };
+    const generatedAt = new Date().toISOString();
+    insightCache.set(key, { insights, generatedAt, expiresAt: Date.now() + CACHE_TTL_MS });
+    return { insights, generatedAt, source: "generated" };
+  } catch {
+    // Cross-store insight generation is optional. The dashboard retains its
+    // deterministic summary when Gemini returns an empty response or errors.
+    return { insights: null, generatedAt: null, source: "unavailable" };
+  }
 }

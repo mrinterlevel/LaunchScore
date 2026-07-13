@@ -34,8 +34,14 @@ export default async function PatternsPage() {
     );
   }
 
-  const generatedInsight = await getAggregateInsight();
-  const insights = generatedInsight.insights ?? p.insights;
+  let insights = p.insights;
+  try {
+    const generatedInsight = await getAggregateInsight();
+    insights = generatedInsight.insights ?? insights;
+  } catch {
+    // The deterministic aggregate summary remains visible if optional insight
+    // generation is unavailable for any unexpected reason.
+  }
 
   return (
     <div className="flex flex-col gap-8">
